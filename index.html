@@ -1,0 +1,1337 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal Governança TI Enterprise</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07100f;
+      --panel: rgba(13, 22, 26, .72);
+      --panel-strong: rgba(16, 28, 34, .9);
+      --line: rgba(255, 255, 255, .12);
+      --muted: #91a4a9;
+      --text: #eef8f6;
+      --cyan: #2dd4bf;
+      --blue: #60a5fa;
+      --amber: #f59e0b;
+      --red: #fb7185;
+      --green: #34d399;
+      --violet: #a78bfa;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    h1, h2, h3, p, span, td, th, button, select {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(45, 212, 191, .18), transparent 30%),
+        radial-gradient(circle at 88% 8%, rgba(245, 158, 11, .10), transparent 28%),
+        radial-gradient(circle at 85% 82%, rgba(96, 165, 250, .14), transparent 32%),
+        linear-gradient(135deg, #06100f 0%, #0b1117 45%, #11100d 100%);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-x: auto;
+    }
+
+    .mesh {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: .35;
+      background-image:
+        linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 82%);
+    }
+
+    .glass {
+      background: linear-gradient(145deg, rgba(255,255,255,.095), rgba(255,255,255,.035));
+      border: 1px solid var(--line);
+      box-shadow: 0 22px 70px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08);
+      backdrop-filter: blur(18px);
+    }
+
+    .side-nav {
+      background: rgba(7, 14, 17, .78);
+      border-right: 1px solid var(--line);
+      backdrop-filter: blur(20px);
+      overflow-y: auto;
+      scrollbar-color: rgba(45,212,191,.45) rgba(255,255,255,.06);
+      scrollbar-width: thin;
+    }
+
+    .top-tabs { display: none; }
+
+    .top-tabs-inner {
+      display: flex;
+      gap: .65rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: .75rem 1rem;
+      scrollbar-color: rgba(45,212,191,.55) rgba(255,255,255,.08);
+      scrollbar-width: thin;
+    }
+
+    .top-tab-btn {
+      min-width: max-content;
+      display: inline-flex;
+      align-items: center;
+      gap: .55rem;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: .68rem .95rem;
+      color: #a6a2d2;
+      font-size: .95rem;
+      font-weight: 650;
+      letter-spacing: 0;
+      transition: transform .22s ease, color .22s ease, background .22s ease, border-color .22s ease;
+    }
+
+    .top-tab-btn:hover {
+      color: white;
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.10);
+      transform: translateY(-1px);
+    }
+
+    .top-tab-btn.active {
+      color: white;
+      background: linear-gradient(135deg, rgba(45,212,191,.18), rgba(96,165,250,.10));
+      border-color: rgba(45,212,191,.30);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 28px rgba(45,212,191,.11);
+    }
+
+    .top-tab-btn .tab-icon {
+      font-size: 1.08rem;
+      line-height: 1;
+    }
+
+    .module-btn {
+      width: 100%;
+      display: block;
+      border: 1px solid transparent;
+      border-radius: 16px;
+      padding: .82rem;
+      color: #b8c8cc;
+      transition: transform .25s ease, border-color .25s ease, background .25s ease, color .25s ease;
+    }
+
+    .module-btn span:last-child {
+      overflow-wrap: normal;
+      white-space: nowrap;
+    }
+
+    .module-shell {
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      min-width: 0;
+    }
+
+    .module-icon {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      min-width: 34px;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(255,255,255,.07);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+      font-size: 1.05rem;
+    }
+
+    .module-meta {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .module-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .55rem;
+    }
+
+    .module-title-row strong {
+      color: inherit;
+      font-size: .9rem;
+      line-height: 1.2;
+      white-space: normal;
+    }
+
+    .module-badge {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      background: rgba(255,255,255,.075);
+      padding: .18rem .48rem;
+      color: #cbd5e1;
+      font-size: .62rem;
+    }
+
+    .module-detail {
+      margin-top: .35rem;
+      color: #84969d;
+      font-size: .7rem;
+      line-height: 1.25;
+    }
+
+    .module-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .38rem;
+      margin-top: .62rem;
+    }
+
+    .module-stat {
+      border-radius: 10px;
+      background: rgba(255,255,255,.055);
+      padding: .35rem .45rem;
+      text-align: left;
+    }
+
+    .module-stat span {
+      display: block;
+      color: #7d9097;
+      font-size: .58rem;
+      line-height: 1.1;
+      white-space: normal;
+    }
+
+    .module-stat b {
+      display: block;
+      margin-top: .12rem;
+      color: #f8fafc;
+      font-size: .7rem;
+      line-height: 1.1;
+      white-space: normal;
+    }
+
+    .module-btn:hover {
+      transform: translateX(4px);
+      color: white;
+      border-color: rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+    }
+
+    .module-btn.active {
+      color: white;
+      background: linear-gradient(135deg, rgba(45,212,191,.24), rgba(96,165,250,.12));
+      border-color: rgba(45,212,191,.42);
+      box-shadow: 0 0 28px rgba(45,212,191,.14);
+    }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: ticker 28s linear infinite;
+    }
+
+    .ticker:hover .ticker-track { animation-play-state: paused; }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    .pulse-live {
+      position: relative;
+      display: inline-flex;
+      width: .62rem;
+      height: .62rem;
+      border-radius: 99px;
+      background: var(--green);
+      box-shadow: 0 0 16px rgba(52,211,153,.9);
+    }
+
+    .pulse-live::after {
+      content: "";
+      position: absolute;
+      inset: -7px;
+      border: 1px solid rgba(52,211,153,.5);
+      border-radius: inherit;
+      animation: ping 1.8s ease-out infinite;
+    }
+
+    @keyframes ping {
+      0% { transform: scale(.5); opacity: .9; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+
+    .kpi-card {
+      position: relative;
+      min-height: 138px;
+      overflow: hidden;
+      border-radius: 20px;
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    }
+
+    .kpi-card::before {
+      content: "";
+      position: absolute;
+      inset: -40% auto auto -18%;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: var(--accent, rgba(45,212,191,.22));
+      filter: blur(22px);
+      opacity: .65;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,.22);
+      box-shadow: 0 28px 80px rgba(0,0,0,.45), 0 0 34px var(--glow, rgba(45,212,191,.16));
+    }
+
+    .context-widget {
+      min-height: 132px;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+    }
+
+    .context-widget:hover {
+      transform: translateY(-4px);
+      border-color: rgba(96,165,250,.28);
+      box-shadow: 0 22px 60px rgba(0,0,0,.32), 0 0 28px rgba(96,165,250,.10);
+    }
+
+    .context-widget::after {
+      content: "";
+      position: absolute;
+      right: -42px;
+      top: -42px;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: var(--widget-glow, rgba(96,165,250,.16));
+      filter: blur(18px);
+    }
+
+    .sector-card {
+      min-height: 172px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: transform .25s ease, border-color .25s ease, background .25s ease, box-shadow .25s ease;
+    }
+
+    .sector-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(45,212,191,.34);
+      background: linear-gradient(145deg, rgba(45,212,191,.13), rgba(255,255,255,.04));
+      box-shadow: 0 24px 64px rgba(0,0,0,.35), 0 0 30px rgba(45,212,191,.12);
+    }
+
+    .chart-wrap {
+      min-height: 320px;
+      height: 34vh;
+      max-height: 420px;
+    }
+
+    .table-row {
+      border-top: 1px solid rgba(255,255,255,.08);
+      transition: background .2s ease;
+    }
+
+    .table-row:hover { background: rgba(255,255,255,.045); }
+
+    .scroll-x {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-color: rgba(45,212,191,.55) rgba(255,255,255,.08);
+      scrollbar-width: thin;
+    }
+
+    .scroll-x::-webkit-scrollbar,
+    .nav-scroll::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .scroll-x::-webkit-scrollbar-track,
+    .nav-scroll::-webkit-scrollbar-track {
+      background: rgba(255,255,255,.08);
+      border-radius: 999px;
+    }
+
+    .scroll-x::-webkit-scrollbar-thumb,
+    .nav-scroll::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, rgba(45,212,191,.85), rgba(96,165,250,.75));
+      border-radius: 999px;
+    }
+
+    .loader {
+      width: 44px;
+      height: 44px;
+      border: 3px solid rgba(255,255,255,.12);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      transform: translateY(-14px);
+      opacity: 0;
+      transition: opacity .45s ease, transform .45s ease;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    .heat-cell {
+      min-height: 42px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,.09);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .76rem;
+      color: rgba(255,255,255,.78);
+      transition: transform .2s ease, filter .2s ease;
+    }
+
+    .heat-cell:hover { transform: scale(1.04); filter: brightness(1.18); }
+
+    @media (max-width: 1023px) {
+      .side-nav {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        width: 100%;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .nav-scroll {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: .5rem;
+        padding-bottom: .25rem;
+        scrollbar-color: rgba(45,212,191,.55) rgba(255,255,255,.08);
+        scrollbar-width: thin;
+      }
+
+      .module-btn {
+        width: 260px;
+        min-width: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mesh"></div>
+  <div id="loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#06100f]">
+    <div class="loader"></div>
+    <p class="mt-5 text-sm text-teal-100/80">Inicializando governança, ITSM, ITOM e IA corporativa...</p>
+  </div>
+
+  <div id="toast" class="toast fixed right-5 top-5 z-40 glass rounded-2xl px-4 py-3 text-sm text-white">
+    <span class="mr-2">LIVE</span><span id="toastText">Atualização executiva recebida</span>
+  </div>
+
+  <div class="relative z-10 min-h-screen lg:flex">
+    <aside class="side-nav lg:fixed lg:inset-y-0 lg:left-0 lg:w-80">
+      <div class="p-5 lg:p-6">
+        <div class="flex items-center gap-3">
+          <div class="grid h-11 w-11 place-items-center rounded-2xl bg-teal-400/15 ring-1 ring-teal-300/30 shadow-[0_0_34px_rgba(45,212,191,.18)]">◈</div>
+          <div>
+            <h1 class="text-lg font-semibold text-white">Portal Governança TI Enterprise</h1>
+            <p class="text-xs text-slate-400">GRC • ITSM • ITOM • IA • FinOps</p>
+          </div>
+        </div>
+
+        <div class="mt-5 flex flex-wrap gap-2 text-[11px] text-slate-300">
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">COBIT</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">ITIL</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">ISO 27001</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">ISO 42001</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">NIST</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">LGPD</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1">TBM</span>
+        </div>
+
+        <div class="mt-6 flex items-center justify-between rounded-2xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3">
+          <span class="flex items-center gap-2 text-sm font-medium text-emerald-100"><i class="pulse-live"></i> Operação LIVE</span>
+          <span id="clock" class="text-xs text-emerald-100/70">--:--:--</span>
+        </div>
+
+        <nav id="moduleNav" class="nav-scroll mt-6 space-y-2 lg:block"></nav>
+      </div>
+    </aside>
+
+    <main class="w-full lg:ml-80">
+      <div class="top-tabs">
+        <div id="topTabs" class="top-tabs-inner"></div>
+      </div>
+      <section class="px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+        <div class="ticker glass overflow-hidden rounded-2xl px-4 py-3">
+          <div class="ticker-track gap-10 text-sm text-slate-100">
+            <span>🚨 ITSM: 7 incidentes críticos • ⏱️ SLA: 97.8% • 🛰️ ITOM: uptime 99.94% • 🔥 Riscos: 4 críticos • 💰 FinOps: cloud R$ 4.8M • 🤖 IA: ISO 42001 96% • ⚙️ N8N: 58 automações • ✅ Compliance: 94% • 🧩 CMDB: 1.284 ativos • 🛡️ DRP: RTO 4h • 🔐 IAM: 98% MFA</span>
+            <span>🚨 ITSM: 7 incidentes críticos • ⏱️ SLA: 97.8% • 🛰️ ITOM: uptime 99.94% • 🔥 Riscos: 4 críticos • 💰 FinOps: cloud R$ 4.8M • 🤖 IA: ISO 42001 96% • ⚙️ N8N: 58 automações • ✅ Compliance: 94% • 🧩 CMDB: 1.284 ativos • 🛡️ DRP: RTO 4h • 🔐 IAM: 98% MFA</span>
+          </div>
+        </div>
+
+        <header class="mt-6 grid gap-5 xl:grid-cols-[1.45fr_.55fr]">
+          <div class="glass rounded-[28px] p-6 sm:p-8">
+            <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div class="mb-3 inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1 text-xs text-teal-100">
+                  <span class="pulse-live"></span> Executive Command Center
+                </div>
+                <h2 id="moduleTitle" class="max-w-4xl text-3xl font-semibold text-white sm:text-5xl">Governança de TI Integrada</h2>
+                <p id="moduleDesc" class="mt-3 max-w-3xl text-sm leading-6 text-slate-300 sm:text-base">Visão executiva consolidada de contratos, fornecedores, ITSM, segurança, IA, ITOM, compliance, mudanças e orçamento.</p>
+              </div>
+              <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p class="text-[11px] text-slate-400">Health</p>
+                  <p id="healthValue" class="text-2xl font-semibold text-emerald-300">94</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p class="text-[11px] text-slate-400">Risco</p>
+                  <p id="riskValue" class="text-2xl font-semibold text-amber-300">Médio</p>
+                </div>
+                <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p class="text-[11px] text-slate-400">Automação</p>
+                  <p id="autoValue" class="text-2xl font-semibold text-sky-300">42</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass rounded-[28px] p-6">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-semibold text-white">Filtros Executivos</h3>
+              <span class="rounded-full bg-emerald-400/12 px-2.5 py-1 text-[11px] text-emerald-200">Atualização automática</span>
+            </div>
+            <div class="mt-5 grid gap-3">
+              <select id="periodFilter" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none">
+                <option>Últimos 30 dias</option>
+                <option>Trimestre atual</option>
+                <option>FY 2026</option>
+              </select>
+              <select id="areaFilter" class="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-sm text-white outline-none">
+                <option>Todas as áreas</option>
+                <option>Infraestrutura</option>
+                <option>Segurança</option>
+                <option>Aplicações</option>
+                <option>Governança IA</option>
+              </select>
+              <button id="refreshBtn" class="rounded-2xl bg-teal-300 px-4 py-3 text-sm font-semibold text-slate-950 shadow-[0_0_30px_rgba(45,212,191,.22)] transition hover:bg-teal-200">Atualizar painel</button>
+              <button id="interviewModeBtn" class="rounded-2xl border border-amber-300/30 bg-amber-300/10 px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-amber-300/20" type="button">Modo entrevista</button>
+            </div>
+          </div>
+        </header>
+
+        <section id="kpiGrid" class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5"></section>
+
+        <section id="moduleWidgets" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
+
+        <section class="mt-6 grid gap-5 xl:grid-cols-[1.1fr_.9fr]">
+          <div class="glass rounded-[28px] p-5">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 id="primaryChartTitle" class="text-base font-semibold text-white">CAPEX vs OPEX</h3>
+                <p id="primaryChartSub" class="text-xs text-slate-400">Distribuição financeira mensal</p>
+              </div>
+              <span class="rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1 text-xs text-teal-100">Chart.js</span>
+            </div>
+            <div class="chart-wrap"><canvas id="primaryChart"></canvas></div>
+          </div>
+
+          <div class="glass rounded-[28px] p-5">
+            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 id="secondaryChartTitle" class="text-base font-semibold text-white">Compliance por área</h3>
+                <p id="secondaryChartSub" class="text-xs text-slate-400">COBIT, ISO, NIST e LGPD</p>
+              </div>
+              <span id="moduleBadge" class="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-100">Enterprise</span>
+            </div>
+            <div class="chart-wrap"><canvas id="secondaryChart"></canvas></div>
+          </div>
+        </section>
+
+        <section class="mt-6 grid gap-5 2xl:grid-cols-[.85fr_1.15fr]">
+          <div class="glass rounded-[28px] p-5">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-semibold text-white">Heatmap Operacional</h3>
+                <p class="text-xs text-slate-400">Severidade por domínio e horário</p>
+              </div>
+              <span class="rounded-full bg-rose-400/12 px-3 py-1 text-xs text-rose-200">Risco dinâmico</span>
+            </div>
+            <div class="mt-5 h-[290px]"><canvas id="heatmapChart"></canvas></div>
+          </div>
+
+          <div class="glass rounded-[28px] p-5">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 id="tableTitle" class="text-base font-semibold text-white">Fila Executiva</h3>
+                <p class="text-xs text-slate-400">Itens priorizados para decisão e acompanhamento</p>
+              </div>
+              <div class="flex gap-2 text-xs">
+                <span class="rounded-full bg-emerald-400/12 px-3 py-1 text-emerald-200">LIVE</span>
+                <span id="recordsCount" class="rounded-full bg-white/8 px-3 py-1 text-slate-300">0 registros</span>
+              </div>
+            </div>
+            <div class="scroll-x mt-5 rounded-2xl border border-white/10">
+              <table class="min-w-[760px] w-full text-left text-sm">
+                <thead class="bg-white/5 text-xs uppercase text-slate-400">
+                  <tr>
+                    <th class="px-4 py-3 font-medium">Item</th>
+                    <th class="px-4 py-3 font-medium">Owner</th>
+                    <th class="px-4 py-3 font-medium">Status</th>
+                    <th class="px-4 py-3 font-medium">Impacto</th>
+                  </tr>
+                </thead>
+                <tbody id="dataTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section class="mt-6 grid gap-5 xl:grid-cols-3">
+          <div class="glass rounded-[28px] p-5 xl:col-span-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-semibold text-white">Integrações N8N</h3>
+                <p class="text-xs text-slate-400">Orquestração corporativa com automações e IA</p>
+              </div>
+              <span class="rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1 text-xs text-sky-100">42 workflows</span>
+            </div>
+            <div id="n8nFlow" class="mt-5 grid gap-3 md:grid-cols-5"></div>
+          </div>
+
+          <div class="glass rounded-[28px] p-5">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-semibold text-white">Alertas Executivos</h3>
+              <span class="rounded-full bg-rose-400/12 px-3 py-1 text-xs text-rose-200">Críticos</span>
+            </div>
+            <div id="alerts" class="mt-5 space-y-3"></div>
+          </div>
+        </section>
+
+        <section class="mt-6 glass rounded-[28px] p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-semibold text-white">N8N Real Ready</h3>
+              <p class="text-xs text-slate-400">Estrutura preparada para trocar dados simulados por webhooks, APIs corporativas e execuções reais.</p>
+            </div>
+            <span class="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">Webhook enabled</span>
+          </div>
+          <div class="mt-5 grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label class="block rounded-2xl border border-white/10 bg-black/20 p-4">
+                <span class="text-xs text-slate-400">Endpoint N8N principal</span>
+                <input id="n8nEndpoint" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none" value="https://n8n.suaempresa.com/webhook/governanca-ti">
+              </label>
+              <label class="block rounded-2xl border border-white/10 bg-black/20 p-4">
+                <span class="text-xs text-slate-400">Token / API Key</span>
+                <input id="n8nToken" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none" value="Bearer ***">
+              </label>
+              <label class="block rounded-2xl border border-white/10 bg-black/20 p-4">
+                <span class="text-xs text-slate-400">Origem de dados</span>
+                <select id="dataSourceMode" class="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none">
+                  <option>Simulado executivo</option>
+                  <option>N8N webhook</option>
+                  <option>API corporativa</option>
+                  <option>Arquivo JSON publicado</option>
+                </select>
+              </label>
+              <div class="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <span class="text-xs text-slate-400">Payload esperado</span>
+                <p class="mt-2 text-sm text-slate-200">kpis, modules, alerts, tableRows, charts, automations, timestamp</p>
+              </div>
+              <div class="rounded-2xl border border-amber-300/20 bg-amber-300/10 p-4 sm:col-span-2">
+                <span class="text-xs font-semibold text-amber-100">Atenção para ambiente real</span>
+                <p class="mt-2 text-sm leading-5 text-amber-50/80">Não publique token secreto diretamente no GitHub Pages. Para produção, use webhook público controlado, proxy seguro ou autenticação no N8N.</p>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-semibold text-white">Contrato de integração</p>
+                <button id="simulateWebhookBtn" class="rounded-xl bg-sky-300 px-3 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-200" type="button">Testar entrada</button>
+              </div>
+              <pre class="scroll-x mt-4 max-h-56 rounded-2xl border border-white/10 bg-black/35 p-4 text-xs leading-5 text-slate-300"><code>{
+  "module": "itsm",
+  "timestamp": "2026-05-20T16:55:00-03:00",
+  "kpis": { "sla": 97.8, "uptime": 99.94, "criticalIncidents": 7 },
+  "alerts": ["Incidente P1 aberto", "SLA recalculado"],
+  "source": "n8n.workflow.governanca-ti"
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const modules = [
+      { id: "geral", icon: "📊", name: "Visão Geral", title: "Painel Executivo Geral", desc: "Prévia consolidada dos setores de Governança de TI, GRC, ITSM, ITOM, Segurança, IA, fornecedores e orçamento.", health: 94, risk: "Médio", auto: 42, badge: "Enterprise" },
+      { id: "contratos", icon: "📄", name: "Contratos", title: "Gestão Executiva de Contratos", desc: "Renovações, riscos, SLAs contratuais, custos por fornecedor e alertas de vencimento.", health: 91, risk: "Médio", auto: 12, badge: "Contratos" },
+      { id: "fornecedores", icon: "🏢", name: "Fornecedores", title: "Risco e Performance de Fornecedores", desc: "Classificação crítica, dependência operacional, qualidade de entrega e exposição financeira.", health: 88, risk: "Alto", auto: 9, badge: "Supply Risk" },
+      { id: "itsm", icon: "🎧", name: "ITSM", title: "Operação ITSM e Experiência de Serviço", desc: "Incidentes, problemas, requisições, backlog, SLA e priorização executiva de atendimento.", health: 93, risk: "Médio", auto: 18, badge: "ITIL" },
+      { id: "projetos", icon: "🚀", name: "Projetos", title: "Portfólio Estratégico de Projetos", desc: "Roadmap, status executivo, riscos de entrega, orçamento consumido e valor realizado.", health: 86, risk: "Médio", auto: 7, badge: "PMO" },
+      { id: "seguranca", icon: "🔐", name: "Segurança & IAM", title: "Segurança, IAM e Zero Trust", desc: "MFA, acessos privilegiados, vulnerabilidades críticas, identidade e postura de segurança.", health: 95, risk: "Baixo", auto: 22, badge: "ISO 27001" },
+      { id: "ia", icon: "🤖", name: "Governança IA", title: "Governança de IA Corporativa", desc: "ISO 42001, catálogo de IA, risco algorítmico, auditoria, LGPD, modelos aprovados e uso restrito.", health: 96, risk: "Baixo", auto: 15, badge: "ISO 42001" },
+      { id: "itom", icon: "🛰️", name: "ITOM", title: "ITOM, Observabilidade e Disponibilidade", desc: "Uptime, eventos críticos, capacidade, disponibilidade, monitoramento e health score.", health: 99, risk: "Baixo", auto: 24, badge: "Observability" },
+      { id: "compliance", icon: "✅", name: "Conformidade", title: "Conformidade, Auditoria e Controles", desc: "COBIT, NIST, LGPD, evidências, não conformidades e trilhas de auditoria.", health: 94, risk: "Médio", auto: 11, badge: "GRC" },
+      { id: "mudancas", icon: "🔄", name: "Mudanças", title: "Mudanças, CAB e Risco Operacional", desc: "Calendário de mudanças, aprovações, janelas críticas, rollback e impacto em serviços.", health: 89, risk: "Médio", auto: 8, badge: "CAB" },
+      { id: "budget", icon: "💰", name: "Budget", title: "Budget TI, CAPEX, OPEX e TBM", desc: "Orçamento anual, consumo por torre, CAPEX vs OPEX, forecast e eficiência financeira.", health: 92, risk: "Médio", auto: 10, badge: "TBM" }
+    ];
+    const topTabOrder = [
+      { id: "geral", label: "Visão Geral", icon: "📊" },
+      { id: "contratos", label: "Contratos", icon: "📋" },
+      { id: "fornecedores", label: "Fornecedores", icon: "🤝" },
+      { id: "itsm", label: "ITSM", icon: "🚨" },
+      { id: "projetos", label: "Projetos", icon: "📁" },
+      { id: "compliance", label: "Conformidade", icon: "✅" },
+      { id: "seguranca", label: "Segurança e IAM", icon: "🔐" },
+      { id: "ia", label: "Gov. IA", icon: "🤖" },
+      { id: "itom", label: "ITOM", icon: "🛰️" },
+      { id: "budget", label: "Budget", icon: "💰" },
+      { id: "mudancas", label: "Mudanças", icon: "🔄" }
+    ];
+
+    const kpisBase = [
+      ["Contratos ativos", "128", "+6 este mês", "#2dd4bf"],
+      ["Budget TI", "R$ 18.7M", "72% comprometido", "#60a5fa"],
+      ["CAPEX", "R$ 7.4M", "+4.8% vs plano", "#f59e0b"],
+      ["OPEX", "R$ 11.3M", "-2.1% vs plano", "#a78bfa"],
+      ["Compliance", "94%", "ISO/NIST/LGPD", "#34d399"],
+      ["Incidentes críticos", "7", "-3 em 24h", "#fb7185"],
+      ["SLA", "97.8%", "+1.2 p.p.", "#38bdf8"],
+      ["Uptime ITOM", "99.94%", "infraestrutura", "#22c55e"],
+      ["Risco IA", "Baixo", "score 18/100", "#c084fc"],
+      ["Fornecedores críticos", "14", "3 em mitigação", "#f97316"]
+    ];
+
+    const dataByModule = {
+      contratos: { primary: "bar", secondary: "doughnut", rows: [["Contrato ERP SAP", "Finanças", "Renovar", "Alto"], ["Data Center Colocation", "Infra", "Em revisão", "Crítico"], ["Licenças Segurança", "CISO", "Regular", "Médio"], ["Suporte ITSM", "Operações", "Negociar SLA", "Alto"]], alerts: ["3 contratos críticos vencem em 45 dias", "Cláusula LGPD pendente em fornecedor cloud", "Economia potencial de R$ 420K em renegociação"] },
+      fornecedores: { primary: "radar", secondary: "bar", rows: [["Fornecedor Cloud A", "Infra", "Atenção", "Crítico"], ["BPO Service Desk", "Operações", "Regular", "Alto"], ["Consultoria IA", "Dados", "Aprovado", "Médio"], ["Telecom MPLS", "Rede", "Mitigar", "Alto"]], alerts: ["Fornecedor Cloud A excedeu limite de risco", "2 fornecedores sem evidência ISO 27001", "Plano de continuidade pendente para telecom"] },
+      itsm: { primary: "line", secondary: "bar", rows: [["INC004219", "Service Desk", "Crítico", "Alto"], ["PRB000187", "Aplicações", "Em RCA", "Alto"], ["REQ009554", "IAM", "Dentro SLA", "Médio"], ["INC004230", "Infra", "Resolvido", "Baixo"]], alerts: ["7 incidentes críticos em acompanhamento", "SLA P1 caiu para 96.4% no período", "IA classificou 312 tickets automaticamente"] },
+      projetos: { primary: "bar", secondary: "line", rows: [["Modernização IAM", "Segurança", "On track", "Alto"], ["CMDB Enterprise", "ITOM", "Risco", "Crítico"], ["Portal GRC", "Governança", "On track", "Alto"], ["Automação N8N", "Arquitetura", "Acelerado", "Médio"]], alerts: ["CMDB com risco de atraso por integração", "3 marcos executivos vencem nesta semana", "Projeto N8N economizou 180h/mês"] },
+      seguranca: { primary: "bar", secondary: "radar", rows: [["MFA Global", "IAM", "98%", "Alto"], ["PAM Admins", "CISO", "Mitigar", "Crítico"], ["Vuln CVE Alta", "SecOps", "Aberto", "Alto"], ["LGPD DLP", "Privacidade", "Regular", "Médio"]], alerts: ["12 vulnerabilidades críticas em janela de correção", "98% dos usuários com MFA habilitado", "Contas privilegiadas sem rotação detectadas"] },
+      ia: { primary: "radar", secondary: "doughnut", rows: [["Modelo ChatOps", "Dados", "Aprovado", "Médio"], ["IA Contratos", "Jurídico", "Auditoria", "Alto"], ["Classificador ITSM", "Operações", "Produção", "Baixo"], ["Modelo Restrito", "Risco", "Bloqueado", "Crítico"]], alerts: ["96% de aderência ISO 42001", "2 modelos restritos bloqueados por política", "Catálogo de IA com 37 modelos registrados"] },
+      itom: { primary: "line", secondary: "bar", rows: [["Uptime Core", "NOC", "99.94%", "Alto"], ["Eventos críticos", "Observabilidade", "12", "Crítico"], ["Capacidade Storage", "Infra", "78%", "Médio"], ["Health Score", "SRE", "99", "Baixo"]], alerts: ["Uptime 99.94% no core corporativo", "12 eventos críticos correlacionados", "Capacidade de storage atinge 78%"] },
+      compliance: { primary: "radar", secondary: "bar", rows: [["COBIT APO", "Governança", "91%", "Médio"], ["NIST CSF", "CISO", "94%", "Alto"], ["LGPD", "Privacidade", "88%", "Alto"], ["ISO 27001", "Segurança", "96%", "Médio"]], alerts: ["4 evidências vencem antes da próxima auditoria", "LGPD requer atualização de matriz ROPA", "ISO 27001 com maturidade acima da meta"] },
+      mudancas: { primary: "bar", secondary: "line", rows: [["CHG00881", "CAB", "Aprovada", "Alto"], ["CHG00893", "Infra", "Rollback pronto", "Crítico"], ["CHG00901", "Apps", "Em análise", "Médio"], ["CHG00907", "Rede", "Agendada", "Alto"]], alerts: ["1 mudança crítica na janela de domingo", "Rollback obrigatório validado para infraestrutura", "Taxa de sucesso de mudanças em 98.1%"] },
+      budget: { primary: "bar", secondary: "doughnut", rows: [["Cloud", "FinOps", "R$ 4.8M", "Alto"], ["Licenças", "Governança", "R$ 3.1M", "Médio"], ["Projetos", "PMO", "R$ 6.2M", "Alto"], ["Operação", "Infra", "R$ 4.6M", "Médio"]], alerts: ["Forecast indica consumo de 96% do orçamento anual", "OPEX cloud reduziu 7% com otimizações", "CAPEX de modernização segue dentro do plano"] }
+    };
+    dataByModule.geral = {
+      primary: "bar",
+      secondary: "radar",
+      rows: [
+        ["ITSM", "Operações", "SLA 97.8%", "Alto"],
+        ["ITOM", "NOC/SRE", "Uptime 99.94%", "Alto"],
+        ["Governança IA", "Dados", "ISO 42001 96%", "Médio"],
+        ["Budget TI", "FinOps", "R$ 18.7M", "Alto"]
+      ],
+      alerts: [
+        "Visão geral consolidada com 10 setores monitorados",
+        "ITOM, IAM e Governança IA operando acima da meta executiva",
+        "Budget, contratos críticos e mudanças CAB exigem acompanhamento semanal"
+      ]
+    };
+
+    const enterpriseModuleUpgrades = [
+      { id: "cmdb", icon: "🧩", name: "CMDB", title: "CMDB, Ativos e Dependências Críticas", desc: "Inventário de ativos, aplicações, owners, criticidade, dependências, ciclo de vida e impacto em serviços.", health: 87, risk: "Médio", auto: 16, badge: "CMDB" },
+      { id: "riscos", icon: "🔥", name: "Riscos", title: "Gestão de Riscos, KRIs e Mitigação", desc: "Heatmap, probabilidade, impacto, KRIs, riscos IA, riscos operacionais e planos de mitigação.", health: 84, risk: "Alto", auto: 13, badge: "ERM" },
+      { id: "continuidade", icon: "🛡️", name: "Continuidade", title: "Continuidade, DRP, Backup e Crise", desc: "DRP, backup, RTO/RPO, crise, disponibilidade, resiliência e testes de recuperação.", health: 90, risk: "Médio", auto: 14, badge: "BCP/DRP" }
+    ];
+
+    enterpriseModuleUpgrades.forEach((upgrade) => {
+      if (!modules.some((module) => module.id === upgrade.id)) modules.push(upgrade);
+    });
+
+    Object.assign(modules.find((module) => module.id === "geral"), {
+      name: "Dashboard Executivo",
+      title: "Dashboard Executivo CIO/CISO",
+      desc: "Cockpit corporativo de Governança de TI, GRC, ITSM, ITOM, IA, riscos, FinOps, PMO, CMDB, continuidade e automação inteligente.",
+      badge: "CIO Cockpit",
+      auto: 58
+    });
+    Object.assign(modules.find((module) => module.id === "projetos"), {
+      name: "PMO",
+      title: "PMO, Roadmap, ROI e Projetos Críticos",
+      desc: "Roadmap executivo, ROI, prioridades, milestones, status executivo, dependências e projetos críticos.",
+      badge: "PMO"
+    });
+    Object.assign(modules.find((module) => module.id === "budget"), {
+      name: "FinOps",
+      title: "FinOps, Cloud Costs e Forecast Executivo",
+      desc: "Custos cloud Azure/AWS/GCP, consumo IA, otimização financeira, forecast, CAPEX, OPEX e TBM.",
+      badge: "FinOps"
+    });
+
+    topTabOrder.splice(0, topTabOrder.length,
+      { id: "geral", label: "Dashboard Executivo", icon: "📊" },
+      { id: "contratos", label: "Contratos", icon: "📋" },
+      { id: "fornecedores", label: "Fornecedores", icon: "🤝" },
+      { id: "itsm", label: "ITSM", icon: "🚨" },
+      { id: "itom", label: "ITOM", icon: "🛰️" },
+      { id: "ia", label: "Governança IA", icon: "🤖" },
+      { id: "seguranca", label: "Segurança & IAM", icon: "🔐" },
+      { id: "compliance", label: "Compliance", icon: "✅" },
+      { id: "projetos", label: "PMO", icon: "🚀" },
+      { id: "cmdb", label: "CMDB", icon: "🧩" },
+      { id: "riscos", label: "Riscos", icon: "🔥" },
+      { id: "budget", label: "FinOps", icon: "💰" },
+      { id: "mudancas", label: "Mudanças & CAB", icon: "🔄" },
+      { id: "continuidade", label: "Continuidade", icon: "🛡️" }
+    );
+
+    Object.assign(dataByModule, {
+      geral: { primary: "line", secondary: "radar", rows: [["ITSM", "Operações", "SLA 97.8%", "Alto"], ["ITOM", "NOC/SRE", "Uptime 99.94%", "Alto"], ["Governança IA", "Dados", "ISO 42001 96%", "Médio"], ["FinOps", "CFO/CIO", "Forecast 96%", "Alto"], ["Riscos", "GRC", "KRI 84/100", "Crítico"]], alerts: ["Cockpit executivo consolidando 14 domínios enterprise", "N8N processou 58 automações de governança nas últimas 24h", "Riscos, FinOps e mudanças CAB exigem acompanhamento semanal"] },
+      projetos: { primary: "bar", secondary: "line", rows: [["Roadmap IAM Zero Trust", "PMO", "Milestone M2", "Alto"], ["CMDB Enterprise", "Arquitetura", "Risco prazo", "Crítico"], ["Portal GRC + IA", "Governança", "ROI 18%", "Alto"], ["N8N Automação", "Arquitetura", "Acelerado", "Médio"], ["Observabilidade ITOM", "SRE", "On track", "Alto"]], alerts: ["2 projetos críticos impactam continuidade e CMDB", "ROI consolidado do portfólio em 18% no ciclo", "3 milestones executivos vencem nos próximos 10 dias"] },
+      cmdb: { primary: "doughnut", secondary: "bar", rows: [["ERP SAP", "Aplicações", "Crítico", "Alto"], ["ServiceNow", "ITSM", "Crítico", "Alto"], ["Cluster SQL", "Dados", "EOL 2027", "Médio"], ["Firewall Core", "Segurança", "Owner CISO", "Crítico"], ["Portal GRC", "Governança", "Produção", "Médio"]], alerts: ["1.284 ativos inventariados com 92% de ownership", "17 dependências críticas sem teste de continuidade recente", "CMDB correlacionada com ITOM para impacto automático de incidentes"] },
+      riscos: { primary: "radar", secondary: "doughnut", rows: [["Risco IA restrita", "Governança IA", "Mitigar", "Crítico"], ["Risco fornecedor cloud", "Supply", "Plano ação", "Alto"], ["Risco backup legado", "Continuidade", "Em teste", "Alto"], ["Risco PAM", "IAM", "Rotação", "Crítico"], ["Risco budget cloud", "FinOps", "Monitorar", "Médio"]], alerts: ["Heatmap aponta 4 riscos críticos e 9 riscos altos", "KRIs de IA e fornecedores acima do apetite definido", "Mitigações priorizadas para IAM, backup e cloud"] },
+      budget: { primary: "bar", secondary: "line", rows: [["Azure", "FinOps", "R$ 2.1M", "Alto"], ["AWS", "FinOps", "R$ 1.4M", "Médio"], ["GCP", "Dados/IA", "R$ 620K", "Médio"], ["Tokens IA", "Governança IA", "R$ 184K", "Alto"], ["Otimização Cloud", "FinOps", "-7%", "Baixo"]], alerts: ["Cloud costs representam R$ 4.8M do orçamento anual", "Consumo de IA cresceu 23% no mês e requer política de rate limit", "Forecast mantém orçamento em 96% com economia potencial de R$ 740K"] },
+      continuidade: { primary: "line", secondary: "bar", rows: [["DRP ERP", "Continuidade", "RTO 4h", "Crítico"], ["Backup SQL", "Infra", "RPO 15min", "Alto"], ["Crise Cyber", "CISO", "Playbook", "Alto"], ["Teste Restore", "SRE", "Pendente", "Médio"], ["Datacenter", "ITOM", "Disponível", "Alto"]], alerts: ["DRP de ERP requer reteste executivo neste trimestre", "RTO/RPO de sistemas críticos dentro da meta em 87%", "Plano de crise cyber integrado a Teams, Email e N8N"] },
+      itom: { primary: "line", secondary: "bar", rows: [["Uptime Core", "NOC", "99.94%", "Alto"], ["Eventos críticos", "Observabilidade", "12", "Crítico"], ["Servidores Linux", "SRE", "412 ativos", "Médio"], ["Cloud Health", "FinOps/SRE", "96/100", "Alto"], ["Capacidade Storage", "Infra", "78%", "Médio"]], alerts: ["Observabilidade correlaciona 12 eventos críticos em 3 serviços", "Mapa operacional aponta saturação futura em storage e banco SQL", "Alertas inteligentes reduzem ruído operacional em 31%"] },
+      ia: { primary: "radar", secondary: "doughnut", rows: [["Agente Contratos", "Jurídico", "Aprovado", "Médio"], ["Classificador ITSM", "Operações", "Produção", "Baixo"], ["Copilot GRC", "Governança", "Auditoria", "Alto"], ["Modelo Restrito", "Risco", "Bloqueado", "Crítico"], ["Tokens LLM", "FinOps IA", "1.8M/mês", "Alto"]], alerts: ["ISO 42001 em 96% com inventário de 37 modelos e agentes IA", "Explainability obrigatória para 5 modelos de alto impacto", "LGPD IA exige revisão mensal de bases sensíveis e prompts"] }
+    });
+
+    const moduleWidgetData = {
+      geral: [["Governança", "14 domínios integrados", "COBIT, ITIL, ISO, NIST", "#2dd4bf"], ["Operação", "99.94% uptime", "ITOM + observabilidade", "#60a5fa"], ["Risco", "4 críticos", "KRIs acima do apetite", "#fb7185"], ["Automação", "58 fluxos", "N8N + IA + Teams", "#a78bfa"]],
+      contratos: [["Ativos", "128 contratos", "R$ 18.7M total", "#2dd4bf"], ["Renovação", "3 críticos", "45 dias", "#f59e0b"], ["IA", "Resumo automático", "N8N + LLM", "#a78bfa"], ["Economia", "R$ 420K", "renegociação", "#34d399"]],
+      fornecedores: [["Críticos", "14 fornecedores", "3 em mitigação", "#fb7185"], ["SLA", "96.8%", "média ponderada", "#60a5fa"], ["ISO", "2 pendências", "evidências", "#f59e0b"], ["Continuidade", "82%", "planos válidos", "#34d399"]],
+      itsm: [["Incidentes", "7 críticos", "P1/P2", "#fb7185"], ["SLA", "97.8%", "mensal", "#2dd4bf"], ["IA", "312 tickets", "classificados", "#a78bfa"], ["Problemas", "5 RCA", "em análise", "#f59e0b"]],
+      itom: [["Uptime", "99.94%", "core", "#34d399"], ["Eventos", "12 críticos", "correlacionados", "#fb7185"], ["Capacidade", "78%", "storage", "#f59e0b"], ["Health", "96/100", "cloud + servidores", "#60a5fa"]],
+      ia: [["ISO 42001", "96%", "aderência", "#34d399"], ["Modelos", "37 ativos", "catálogo IA", "#60a5fa"], ["Tokens", "1.8M/mês", "consumo LLM", "#f59e0b"], ["Restritos", "2 bloqueados", "policy", "#fb7185"]],
+      seguranca: [["MFA", "98%", "usuários", "#34d399"], ["PAM", "7 contas", "sem rotação", "#fb7185"], ["Vulns", "12 críticas", "janela correção", "#f59e0b"], ["Zero Trust", "91%", "maturidade", "#60a5fa"]],
+      compliance: [["Controles", "94%", "conformidade", "#34d399"], ["Evidências", "4 vencem", "auditoria", "#f59e0b"], ["LGPD", "88%", "ROPA/DPIA", "#60a5fa"], ["NIST", "94%", "CSF", "#a78bfa"]],
+      projetos: [["Roadmap", "18 marcos", "trimestre", "#60a5fa"], ["ROI", "18%", "portfólio", "#34d399"], ["Críticos", "2 projetos", "risco prazo", "#fb7185"], ["Prioridade", "5 épicos", "CIO/CISO", "#f59e0b"]],
+      cmdb: [["Ativos", "1.284", "inventário", "#60a5fa"], ["Owners", "92%", "mapeados", "#34d399"], ["Dependências", "17 críticas", "sem teste", "#fb7185"], ["Lifecycle", "31 EOL", "2026/2027", "#f59e0b"]],
+      riscos: [["KRIs", "84/100", "exposição", "#fb7185"], ["Mitigação", "11 planos", "ativos", "#2dd4bf"], ["IA", "2 críticos", "restrição", "#a78bfa"], ["Operacional", "9 altos", "heatmap", "#f59e0b"]],
+      budget: [["Cloud", "R$ 4.8M", "Azure/AWS/GCP", "#60a5fa"], ["IA", "R$ 184K", "tokens/mês", "#a78bfa"], ["Forecast", "96%", "ano", "#f59e0b"], ["Savings", "R$ 740K", "otimização", "#34d399"]],
+      mudancas: [["CAB", "14 mudanças", "semana", "#60a5fa"], ["Sucesso", "98.1%", "mudanças", "#34d399"], ["Rollback", "3 críticos", "validados", "#f59e0b"], ["Risco", "1 janela", "domingo", "#fb7185"]],
+      continuidade: [["DRP", "87%", "testado", "#34d399"], ["RTO", "4h", "ERP crítico", "#f59e0b"], ["RPO", "15min", "SQL core", "#60a5fa"], ["Crise", "1 playbook", "cyber", "#fb7185"]]
+    };
+
+    const chartSets = {
+      bar: {
+        labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"],
+        datasets: [
+          { label: "CAPEX", data: [1.1, 1.3, 1.0, 1.6, 1.4, 1.8], backgroundColor: "rgba(45,212,191,.72)", borderRadius: 12 },
+          { label: "OPEX", data: [1.6, 1.8, 1.7, 1.9, 2.0, 2.3], backgroundColor: "rgba(245,158,11,.72)", borderRadius: 12 }
+        ]
+      },
+      line: {
+        labels: ["00h", "04h", "08h", "12h", "16h", "20h", "24h"],
+        datasets: [
+          { label: "SLA", data: [97.1, 98.2, 96.4, 97.8, 98.6, 97.9, 98.4], borderColor: "#2dd4bf", backgroundColor: "rgba(45,212,191,.16)", fill: true, tension: .42 },
+          { label: "Uptime", data: [99.91, 99.93, 99.9, 99.94, 99.95, 99.94, 99.96], borderColor: "#60a5fa", backgroundColor: "rgba(96,165,250,.12)", fill: true, tension: .42 }
+        ]
+      },
+      radar: {
+        labels: ["COBIT", "ITIL", "ISO 27001", "ISO 42001", "NIST", "LGPD"],
+        datasets: [
+          { label: "Maturidade", data: [88, 94, 96, 92, 89, 87], borderColor: "#a78bfa", backgroundColor: "rgba(167,139,250,.22)", pointBackgroundColor: "#a78bfa" },
+          { label: "Meta", data: [92, 95, 94, 90, 91, 90], borderColor: "#34d399", backgroundColor: "rgba(52,211,153,.12)", pointBackgroundColor: "#34d399" }
+        ]
+      },
+      doughnut: {
+        labels: ["Conforme", "Atenção", "Crítico"],
+        datasets: [{ data: [74, 19, 7], backgroundColor: ["#34d399", "#f59e0b", "#fb7185"], borderColor: "rgba(255,255,255,.08)", borderWidth: 2 }]
+      }
+    };
+
+    const chartTitles = {
+      bar: ["CAPEX vs OPEX", "Distribuição financeira e consumo mensal"],
+      line: ["SLA mensal e Uptime ITOM", "Tendência operacional em tempo quase real"],
+      radar: ["Maturidade Governança IA e GRC", "Frameworks corporativos e controles"],
+      doughnut: ["Compliance por área", "Distribuição de conformidade executiva"]
+    };
+
+    const n8nItems = [
+      ["SAP", "N8N", "Dashboard"],
+      ["ServiceNow", "IA", "Classificação automática"],
+      ["Contratos", "IA", "Resumo executivo"],
+      ["Alertas", "Teams / Email", "Notificação"],
+      ["APIs", "N8N", "Data hub"],
+      ["Banco SQL", "N8N", "KRIs e CMDB"],
+      ["Webhooks", "N8N", "Eventos em tempo real"]
+    ];
+    const sampleN8NPayload = {
+      module: "itsm",
+      timestamp: "2026-05-20T16:55:00-03:00",
+      kpis: { sla: 97.8, uptime: 99.94, criticalIncidents: 7 },
+      alerts: ["N8N recebeu incidente P1 do ServiceNow", "IA classificou prioridade e atualizou o painel", "Teams e Email notificados automaticamente"],
+      tableRows: [
+        ["N8N-WF-ITSM-001", "Automação", "Executado", "Alto"],
+        ["N8N-WF-IAM-007", "IAM", "Aguardando MFA", "Médio"],
+        ["N8N-WF-GRC-012", "Compliance", "Evidência criada", "Baixo"],
+        ["N8N-WF-IA-004", "Gov. IA", "Resumo gerado", "Médio"]
+      ]
+    };
+
+    const nav = document.getElementById("moduleNav");
+    const topTabs = document.getElementById("topTabs");
+    const kpiGrid = document.getElementById("kpiGrid");
+    const moduleWidgets = document.getElementById("moduleWidgets");
+    const alerts = document.getElementById("alerts");
+    const dataTable = document.getElementById("dataTable");
+    const n8nFlow = document.getElementById("n8nFlow");
+    let activeModule = "geral";
+    let primaryChart;
+    let secondaryChart;
+    let heatmapChart;
+    let interviewTimer;
+    let interviewStep = 0;
+
+    Chart.defaults.color = "rgba(238,248,246,.75)";
+    Chart.defaults.borderColor = "rgba(255,255,255,.08)";
+    Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+
+    function renderNav() {
+      const orderedModules = topTabOrder
+        .map((tab) => modules.find((module) => module.id === tab.id))
+        .filter(Boolean);
+      nav.innerHTML = orderedModules.map((module) => {
+        const tone = module.risk === "Alto" ? "Crítico" : module.risk;
+        const detail = module.id === "geral" ? "Resumo executivo dos setores" :
+          module.id === "itsm" ? "Incidentes, SLA e tickets" :
+          module.id === "ia" ? "ISO 42001, LGPD e modelos" :
+          module.id === "budget" ? "CAPEX, OPEX e forecast" :
+          module.id === "seguranca" ? "IAM, MFA, PAM e riscos" :
+          module.id === "compliance" ? "COBIT, NIST, ISO e LGPD" :
+          module.id === "mudancas" ? "CAB, janelas e rollback" :
+          module.id === "cmdb" ? "Ativos, owners e dependências" :
+          module.id === "riscos" ? "KRIs, impacto e mitigação" :
+          module.id === "continuidade" ? "DRP, backup, RTO e RPO" :
+          module.id === "fornecedores" ? "Risco, contratos e SLA" :
+          module.id === "itom" ? "Uptime, eventos e capacidade" :
+          module.id === "projetos" ? "Portfólio, roadmap e riscos" :
+          "Contratos, custos e vencimentos";
+        return `
+        <button class="module-btn ${module.id === activeModule ? "active" : ""}" data-module="${module.id}" type="button">
+          <span class="module-shell">
+            <span class="module-icon">${module.icon}</span>
+            <span class="module-meta">
+              <span class="module-title-row">
+                <strong>${module.name}</strong>
+                <span class="module-badge">${module.badge}</span>
+              </span>
+              <span class="module-detail">${detail}</span>
+              <span class="module-stats">
+                <span class="module-stat"><span>Health</span><b>${module.health}</b></span>
+                <span class="module-stat"><span>Risco</span><b>${tone}</b></span>
+                <span class="module-stat"><span>N8N</span><b>${module.auto}</b></span>
+              </span>
+            </span>
+          </span>
+        </button>
+      `}).join("");
+      nav.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => setModule(button.dataset.module));
+      });
+    }
+
+    function renderTopTabs() {
+      topTabs.innerHTML = topTabOrder.map((tab) => `
+        <button class="top-tab-btn ${tab.id === activeModule ? "active" : ""}" data-top-module="${tab.id}" type="button">
+          <span class="tab-icon">${tab.icon}</span>
+          <span>${tab.label}</span>
+        </button>
+      `).join("");
+      topTabs.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", () => setModule(button.dataset.topModule));
+      });
+    }
+
+    function renderKpis(module) {
+      const salt = module.health % 7;
+      kpiGrid.innerHTML = kpisBase.map(([label, value, delta, color], index) => {
+        const display = index === 4 ? `${Math.min(99, module.health + 2)}%` : index === 8 ? module.risk : value;
+        return `
+          <article class="kpi-card glass p-4" style="--accent:${color}33;--glow:${color}22">
+            <div class="relative">
+              <div class="flex items-start justify-between gap-3">
+                <p class="text-xs text-slate-400">${label}</p>
+                <span class="rounded-full bg-white/8 px-2 py-1 text-[10px] text-slate-300">LIVE</span>
+              </div>
+              <p class="mt-4 text-2xl font-semibold text-white">${display}</p>
+              <p class="mt-2 text-xs" style="color:${color}">${delta}</p>
+              <div class="mt-4 h-1.5 overflow-hidden rounded-full bg-white/10">
+                <div class="h-full rounded-full" style="width:${Math.min(96, 58 + index * 4 + salt)}%;background:${color}"></div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function renderModuleWidgets(moduleId) {
+      const widgets = moduleWidgetData[moduleId] || moduleWidgetData.geral;
+      moduleWidgets.innerHTML = widgets.map(([label, value, detail, color]) => `
+        <article class="context-widget glass p-4" style="--widget-glow:${color}28">
+          <div class="relative z-10">
+            <div class="flex items-start justify-between gap-3">
+              <p class="text-xs uppercase text-slate-400">${label}</p>
+              <span class="rounded-full px-2 py-1 text-[10px]" style="background:${color}22;color:${color}">LIVE</span>
+            </div>
+            <p class="mt-4 text-2xl font-semibold text-white">${value}</p>
+            <p class="mt-2 text-xs leading-5 text-slate-400">${detail}</p>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function renderOverview() {
+      const section = document.getElementById("overviewSection");
+      if (!section) return;
+      const sectorModules = modules.filter((module) => module.id !== "geral");
+      section.classList.toggle("hidden", activeModule !== "geral");
+      if (activeModule !== "geral") return;
+      section.innerHTML = `
+        <div class="glass rounded-[28px] p-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 class="text-base font-semibold text-white">Prévia dos Setores</h3>
+              <p class="text-xs text-slate-400">Clique em qualquer setor para abrir o módulo detalhado.</p>
+            </div>
+            <span class="rounded-full border border-teal-300/20 bg-teal-300/10 px-3 py-1 text-xs text-teal-100">${sectorModules.length} áreas monitoradas</span>
+          </div>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            ${sectorModules.map((module, index) => {
+              const tone = module.risk === "Alto" ? "text-rose-200 bg-rose-400/12" : module.risk === "Médio" ? "text-amber-200 bg-amber-400/12" : "text-emerald-200 bg-emerald-400/12";
+              const trend = ["SLA estável", "Risco monitorado", "Automação ativa", "Meta em evolução"][index % 4];
+              return `
+                <button class="sector-card glass p-4 text-left" type="button" data-overview-module="${module.id}">
+                  <div class="flex items-start justify-between gap-3">
+                    <span class="text-2xl">${module.icon}</span>
+                    <span class="rounded-full px-2.5 py-1 text-[11px] ${tone}">${module.risk}</span>
+                  </div>
+                  <h4 class="mt-4 text-sm font-semibold text-white">${module.name}</h4>
+                  <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-400">${module.desc}</p>
+                  <div class="mt-4 flex items-end justify-between gap-3">
+                    <div>
+                      <p class="text-[11px] text-slate-500">Health score</p>
+                      <p class="text-xl font-semibold text-teal-200">${module.health}</p>
+                    </div>
+                    <div class="text-right">
+                      <p class="text-[11px] text-slate-500">N8N/IA</p>
+                      <p class="text-sm font-semibold text-sky-200">${module.auto} fluxos</p>
+                    </div>
+                  </div>
+                  <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+                    <div class="h-full rounded-full bg-gradient-to-r from-teal-300 to-sky-400" style="width:${module.health}%"></div>
+                  </div>
+                  <p class="mt-3 text-[11px] text-slate-400">${trend}</p>
+                </button>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+      section.querySelectorAll("[data-overview-module]").forEach((card) => {
+        card.addEventListener("click", () => setModule(card.dataset.overviewModule));
+      });
+    }
+
+    function chartOptions(type) {
+      const base = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { boxWidth: 10, usePointStyle: true } },
+          tooltip: { backgroundColor: "rgba(7,16,15,.95)", borderColor: "rgba(255,255,255,.12)", borderWidth: 1 }
+        },
+        scales: {
+          x: { grid: { color: "rgba(255,255,255,.06)" } },
+          y: { grid: { color: "rgba(255,255,255,.06)" }, beginAtZero: false }
+        }
+      };
+      if (type === "doughnut" || type === "radar") delete base.scales;
+      if (type === "doughnut") base.cutout = "68%";
+      return base;
+    }
+
+    function buildChart(canvasId, type) {
+      const ctx = document.getElementById(canvasId);
+      return new Chart(ctx, {
+        type,
+        data: JSON.parse(JSON.stringify(chartSets[type])),
+        options: chartOptions(type)
+      });
+    }
+
+    function updateChart(chart, type) {
+      chart.config.type = type;
+      chart.data = JSON.parse(JSON.stringify(chartSets[type]));
+      chart.options = chartOptions(type);
+      chart.update();
+    }
+
+    function renderTablesAndAlerts(moduleData) {
+      dataTable.innerHTML = moduleData.rows.map(([item, owner, status, impact]) => {
+        const tone = impact === "Crítico" ? "text-rose-200 bg-rose-400/12" : impact === "Alto" ? "text-amber-200 bg-amber-400/12" : "text-emerald-200 bg-emerald-400/12";
+        return `
+          <tr class="table-row">
+            <td class="px-4 py-3 text-white">${item}</td>
+            <td class="px-4 py-3 text-slate-300">${owner}</td>
+            <td class="px-4 py-3 text-slate-300">${status}</td>
+            <td class="px-4 py-3"><span class="rounded-full px-2.5 py-1 text-xs ${tone}">${impact}</span></td>
+          </tr>
+        `;
+      }).join("");
+      document.getElementById("recordsCount").textContent = `${moduleData.rows.length} registros`;
+      alerts.innerHTML = moduleData.alerts.map((alert, index) => `
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div class="flex min-w-0 gap-3">
+            <span class="mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${index === 0 ? "bg-rose-400 shadow-[0_0_16px_rgba(251,113,133,.8)]" : index === 1 ? "bg-amber-400" : "bg-teal-300"}"></span>
+            <p class="min-w-0 text-sm leading-5 text-slate-200">${alert}</p>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function heatmapData(seed = 0) {
+      const labels = ["IAM", "ITSM", "ITOM", "IA", "GRC", "Cloud", "SAP", "Rede", "CAB", "LGPD", "N8N", "SOC"];
+      return labels.map((label, index) => {
+        const score = (index * 17 + seed * 11) % 100;
+        return {
+          x: (index % 4) + 1,
+          y: Math.floor(index / 4) + 1,
+          r: 18,
+          score,
+          label,
+          backgroundColor: score > 70 ? "rgba(251,113,133,.68)" : score > 42 ? "rgba(245,158,11,.62)" : "rgba(45,212,191,.58)"
+        };
+      });
+    }
+
+    function renderHeatmap(seed = 0) {
+      const data = heatmapData(seed);
+      if (!heatmapChart) {
+        heatmapChart = new Chart(document.getElementById("heatmapChart"), {
+          type: "bubble",
+          data: {
+            datasets: [{
+              label: "Severidade operacional",
+              data,
+              backgroundColor: data.map((point) => point.backgroundColor),
+              borderColor: "rgba(255,255,255,.18)",
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                backgroundColor: "rgba(7,16,15,.95)",
+                callbacks: {
+                  label: (ctx) => `${ctx.raw.label}: ${ctx.raw.score}/100`
+                }
+              }
+            },
+            scales: {
+              x: { min: .5, max: 4.5, ticks: { display: false }, grid: { color: "rgba(255,255,255,.06)" } },
+              y: { min: .5, max: 3.5, reverse: true, ticks: { display: false }, grid: { color: "rgba(255,255,255,.06)" } }
+            }
+          }
+        });
+        return;
+      }
+      heatmapChart.data.datasets[0].data = data;
+      heatmapChart.data.datasets[0].backgroundColor = data.map((point) => point.backgroundColor);
+      heatmapChart.update();
+    }
+
+    function renderN8N() {
+      n8nFlow.innerHTML = n8nItems.map(([from, mid, to]) => `
+        <div class="rounded-2xl border border-white/10 bg-white/5 p-4 text-center transition hover:-translate-y-1 hover:border-sky-300/30 hover:bg-sky-300/10">
+          <p class="text-sm font-semibold text-white">${from}</p>
+          <p class="my-2 text-lg text-teal-200">→ ${mid} →</p>
+          <p class="text-xs text-slate-400">${to}</p>
+        </div>
+      `).join("");
+    }
+
+    function setModule(id) {
+      activeModule = id;
+      const module = modules.find((item) => item.id === id);
+      const moduleData = dataByModule[id];
+      document.getElementById("moduleTitle").textContent = module.title;
+      document.getElementById("moduleDesc").textContent = module.desc;
+      document.getElementById("healthValue").textContent = module.health;
+      document.getElementById("riskValue").textContent = module.risk;
+      document.getElementById("autoValue").textContent = module.auto;
+      document.getElementById("moduleBadge").textContent = module.badge;
+      document.getElementById("tableTitle").textContent = `Fila Executiva - ${module.name}`;
+      document.getElementById("primaryChartTitle").textContent = chartTitles[moduleData.primary][0];
+      document.getElementById("primaryChartSub").textContent = chartTitles[moduleData.primary][1];
+      document.getElementById("secondaryChartTitle").textContent = chartTitles[moduleData.secondary][0];
+      document.getElementById("secondaryChartSub").textContent = chartTitles[moduleData.secondary][1];
+      renderNav();
+      renderTopTabs();
+      renderKpis(module);
+      renderModuleWidgets(id);
+      renderOverview();
+      renderTablesAndAlerts(moduleData);
+      renderHeatmap(module.health);
+      updateChart(primaryChart, moduleData.primary);
+      updateChart(secondaryChart, moduleData.secondary);
+      showToast(`${module.name}: indicadores recalculados`);
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      document.getElementById("toastText").textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2600);
+    }
+
+    function applyN8NPayload(payload) {
+      const targetModule = dataByModule[payload.module] ? payload.module : activeModule;
+      if (payload.module && payload.module !== activeModule && dataByModule[payload.module]) {
+        setModule(payload.module);
+      }
+      if (Array.isArray(payload.alerts) || Array.isArray(payload.tableRows)) {
+        const merged = {
+          ...dataByModule[targetModule],
+          alerts: Array.isArray(payload.alerts) ? payload.alerts : dataByModule[targetModule].alerts,
+          rows: Array.isArray(payload.tableRows) ? payload.tableRows : dataByModule[targetModule].rows
+        };
+        renderTablesAndAlerts(merged);
+      }
+      if (payload.kpis?.sla) {
+        const slaCard = [...document.querySelectorAll(".kpi-card")].find((card) => card.innerText.includes("SLA"));
+        if (slaCard) slaCard.querySelector("p:nth-of-type(2)").textContent = `${payload.kpis.sla}%`;
+      }
+      if (payload.kpis?.uptime) {
+        const uptimeCard = [...document.querySelectorAll(".kpi-card")].find((card) => card.innerText.includes("Uptime ITOM"));
+        if (uptimeCard) uptimeCard.querySelector("p:nth-of-type(2)").textContent = `${payload.kpis.uptime}%`;
+      }
+      showToast(`N8N: payload aplicado em ${targetModule.toUpperCase()}`);
+    }
+
+    async function fetchN8NData() {
+      const mode = document.getElementById("dataSourceMode").value;
+      if (mode !== "N8N webhook" && mode !== "API corporativa" && mode !== "Arquivo JSON publicado") {
+        applyN8NPayload(sampleN8NPayload);
+        return;
+      }
+      const endpoint = document.getElementById("n8nEndpoint").value.trim();
+      const token = document.getElementById("n8nToken").value.trim();
+      if (!endpoint) {
+        showToast("Informe o endpoint do N8N");
+        return;
+      }
+      try {
+        const headers = { "Accept": "application/json" };
+        if (token && !token.includes("***")) headers.Authorization = token;
+        const response = await fetch(endpoint, { headers });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        applyN8NPayload(payload);
+      } catch (error) {
+        showToast("N8N indisponível: usando payload de demonstração");
+        applyN8NPayload(sampleN8NPayload);
+      }
+    }
+
+    function tickClock() {
+      document.getElementById("clock").textContent = new Date().toLocaleTimeString("pt-BR");
+    }
+
+    function simulateRealtime() {
+      const random = modules[Math.floor(Math.random() * modules.length)];
+      const messages = [
+        `${random.name}: novo evento correlacionado`,
+        `SLA recalculado em ${String((96 + Math.random() * 3).toFixed(1)).replace(".", ",")}%`,
+        `N8N processou ${Math.floor(18 + Math.random() * 90)} execuções`,
+        `ITOM health score atualizado para ${Math.floor(91 + Math.random() * 8)}`
+      ];
+      showToast(messages[Math.floor(Math.random() * messages.length)]);
+      renderHeatmap(Math.floor(Math.random() * 20));
+    }
+
+    function toggleInterviewMode() {
+      const button = document.getElementById("interviewModeBtn");
+      const sequence = [
+        ["geral", "Abertura: visão executiva consolidada de Governança de TI"],
+        ["itsm", "ITSM: incidentes, SLA e classificação automática via IA"],
+        ["itom", "ITOM: uptime, observabilidade, eventos críticos e capacidade"],
+        ["ia", "Governança IA: ISO 42001, LGPD, catálogo e modelos restritos"],
+        ["compliance", "Compliance: COBIT, NIST, ISO, LGPD e evidências"],
+        ["projetos", "PMO: roadmap, ROI, milestones e projetos críticos"],
+        ["cmdb", "CMDB: ativos, owners, dependências e criticidade"],
+        ["riscos", "Riscos: heatmap, KRIs, impacto e mitigação"],
+        ["budget", "FinOps: cloud costs, CAPEX, OPEX, IA e forecast"],
+        ["mudancas", "Mudanças: CAB, janelas críticas, rollback e risco operacional"],
+        ["continuidade", "Continuidade: DRP, backup, crise, RTO e RPO"]
+      ];
+      if (interviewTimer) {
+        clearInterval(interviewTimer);
+        interviewTimer = null;
+        button.textContent = "Modo entrevista";
+        showToast("Modo entrevista pausado");
+        return;
+      }
+      button.textContent = "Pausar entrevista";
+      interviewStep = 0;
+      const runStep = () => {
+        const [moduleId, message] = sequence[interviewStep % sequence.length];
+        setModule(moduleId);
+        showToast(message);
+        interviewStep += 1;
+      };
+      runStep();
+      interviewTimer = setInterval(runStep, 5200);
+    }
+
+    window.addEventListener("load", () => {
+      renderNav();
+      renderTopTabs();
+      renderKpis(modules[0]);
+      renderModuleWidgets(activeModule);
+      document.getElementById("kpiGrid").insertAdjacentHTML("afterend", '<section id="overviewSection" class="mt-6"></section>');
+      renderOverview();
+      renderTablesAndAlerts(dataByModule[activeModule]);
+      renderHeatmap(4);
+      renderN8N();
+      primaryChart = buildChart("primaryChart", dataByModule[activeModule].primary);
+      secondaryChart = buildChart("secondaryChart", dataByModule[activeModule].secondary);
+      tickClock();
+      setInterval(tickClock, 1000);
+      setInterval(simulateRealtime, 6500);
+      document.getElementById("refreshBtn").addEventListener("click", () => setModule(activeModule));
+      document.getElementById("interviewModeBtn").addEventListener("click", toggleInterviewMode);
+      document.getElementById("simulateWebhookBtn").addEventListener("click", fetchN8NData);
+      document.getElementById("periodFilter").addEventListener("change", () => showToast("Filtro de período aplicado"));
+      document.getElementById("areaFilter").addEventListener("change", () => showToast("Filtro de área aplicado"));
+      setTimeout(() => {
+        document.getElementById("loading").style.opacity = "0";
+        document.getElementById("loading").style.pointerEvents = "none";
+        document.getElementById("loading").style.transition = "opacity .6s ease";
+      }, 700);
+    });
+  </script>
+</body>
+</html>
